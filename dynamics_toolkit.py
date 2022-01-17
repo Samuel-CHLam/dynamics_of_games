@@ -5,16 +5,66 @@ from scipy.special import xlogy
 
 # constructing function for replicator dynamics
 class oneD_replicator:
+    '''
+    Class defining single-population games.
+
+    Parameters
+    ----------
+    payoff : ndarray
+        Payoff matrix.
+
+    Attributes
+    size : int
+        Size of payoff matrix, representing the number of options for games.
+    ----------
+    '''
     def __init__(self, payoff):
         # payoff represents payoff matrices
         self.payoff = payoff
         self.size = payoff.shape[0]
         
     def replicator(self,x,t=None):
+        '''
+        The right hand side of single-population replicator dynamics.
+
+        Parameters
+        ----------
+        x : ndarray
+            Choice distribution vector.
+        t : float, optional
+            Time variable for running numerical simulation.
+
+        Return
+        ------
+        ndarray
+
+        See Also
+        --------
+        oneD_replicator.replicator_tensor : single-population replicator equation for tensors.
+        '''
         return x * (self.payoff @ x - np.transpose(x) @ (self.payoff @ x))
     
     def replicator_tensor(self,x_raw,t=None, numpy_output=False):
-        '''A tensor version of replicator function.'''
+        '''
+        A tensor version of single-population replicator dynamics.
+
+        Parameters
+        ----------
+        x_raw : Tensor
+            Choice distribution tensor.
+        t : float, optional
+            Time variable for running numerical simulation.
+        numpy_output : bool, optional
+            If `true` return as an ndarray, if `false` return as a Tensor.
+
+        Return
+        ------
+        ndarray if `numpy_output=True`, otherwise Tensor.
+
+        See Also
+        --------
+        oneD_replicator.replicator : single-population replicator equation for numpy.ndarrays.
+        '''
         A = tensor(self.payoff).double()
         x = x_raw.double()
         output = x*(matmul(A,x) - dot(x,matmul(A,x)))
@@ -24,11 +74,41 @@ class oneD_replicator:
             return output
 
 class twoD_replicator:
-    def __init__(self, payoff1, payoff2, mode=0, alpha1=0, alpha2=0):
+    '''
+    Class defining two-population games.
+
+    Parameters
+    ----------
+    payoff1 : ndarray
+        Payoff matrix for player 1.
+    payoff2 : ndarray
+        Payoff matrix for player 2.
+    convention : bool
+        If `True` then we use the 2nd convention for computation, if `False` then we use 1st convention. The conventions are defined in [1]_.
+    alpha1 : float, optional
+        Memory loss for player 1, as defined in [2]_.
+    alpha2 : float, optional
+        Memory loss for player 2, as defined in [2]_. 
+
+    Attributes
+    ----------
+    shape : tuple
+        Return the shape of payoff matrix for player 1. The first argument is the number of strategies for player 1, and the second argument is the number of strategies for player 2.
+    payoff : ndarray
+        Return the matrix [0 A; B 0] for computations in replicator dynamics.
+    
+    References
+    ----------
+    .. [1] Official dynamics of games notes by Prof. Sebestian van-Strien. Available at https://www.ma.imperial.ac.uk/~svanstri/teaching.php.
+    .. [2] Y. Sato, E. Akiyama, and J. P Crutchfield, Stability and diversity in collective adaptation, Physica. D 210 (2005),
+no. 1, 21–57
+    '''
+
+    def __init__(self, payoff1, payoff2, convention=False, alpha1=0, alpha2=0):
         self.payoff1 = payoff1
 
-        # mode represents what representation we are using. mode = 0 represents 1st representation, and mode = 1 represents 2nd representation
-        if mode:
+        # mode represents what representation we are using.
+        if convention:
             self.payoff2 = payoff2.T
         else:
             self.payoff2 = payoff2
@@ -43,6 +123,26 @@ class twoD_replicator:
         self.memory2 = alpha2
 
     def replicator(self,x,t=None):
+        '''
+        The right hand side of two-population replicator dynamics.
+
+        Parameters
+        ----------
+        x : ndarray
+            Choice distribution vector.
+        t : float, optional
+            Time variable for running numerical simulation.    
+
+        Return
+        ------
+        ndarray
+
+        See Also
+        --------
+        twoD_replicator.adaptive : two-population adaptive reinforcement learning equation for ndarray.
+        twoD_replicator.replicator_tensor : two-population replicator equation for tensors.
+        twoD_replicator.adaptive_tensor : two-population adaptive reinforcement learning equation for Tensors.
+        '''
         n = self.shape[0]
         m = self.shape[1]
         dx = np.zeros(m+n)
@@ -51,6 +151,30 @@ class twoD_replicator:
         return dx
     
     def adaptive(self,x,t=None):
+        '''
+        The right hand side of two-population adaptive reinforcement learning equation, as defined in [1]_.
+
+        Parameters
+        ----------
+        x : ndarray
+            Choice distribution vector.
+        t : float, optional
+            Time variable for running numerical simulation.
+
+        Return
+        ------
+        ndarray
+
+        See Also
+        --------
+        twoD_replicator.replicator : two-population replicator equation for ndarray.
+        twoD_replicator.replicator_tensor : two-population replicator equation for tensors.
+        twoD_replicator.adaptive_tensor : two-population adaptive reinforcement learning equation for Tensors.
+
+        References
+        ----------
+        .. [1] Official dynamics of games notes by Prof. Sebestian van-Strien. Available at https://www.ma.imperial.ac.uk/~svanstri/teaching.php.        
+        '''
         n = self.shape[0]
         m = self.shape[1]
         dx = np.zeros(m+n)
@@ -58,7 +182,29 @@ class twoD_replicator:
         dx[n:] = x[n:] * (self.payoff2@x[:n] - np.dot(x[n:], self.payoff2@x[:n]) + self.memory2 * (-np.log(x[n:]) + np.sum(xlogy(x[n:], x[n:]))))
         return dx
 
-    def replicator_tensor(self,x_raw,t=None):
+    def replicator_tensor(self,x_raw,t=None,numpy_output=False):
+        '''
+        The right hand side of two-population replicator equation.
+
+        Parameters
+        ----------
+        x_raw : Tensor
+            Choice distribution vector.
+        t : float, optional
+            Time variable for running numerical simulation.
+        numpy_output : bool, optional
+            If `true` return as an ndarray, if `false` return as a Tensor.
+
+        Return
+        ------
+        ndarray if `numpy_output=True`, otherwise Tensor
+
+        See Also
+        --------
+        twoD_replicator.replicator : two-population replicator equation for ndarray.
+        twoD_replicator.adaptive : two-population adaptive reinforcement learning equation for ndarray.
+        twoD_replicator.adaptive_tensor : two-population adaptive reinforcement learning equation for tensors.        
+        '''
         n = self.shape[0]
         m = self.shape[1]
         A = tensor(self.payoff1).double()
@@ -67,9 +213,38 @@ class twoD_replicator:
         dx = zeros(m+n)
         dx[:n] = x[:n] * (matmul(A, x[n:]) - dot(x[:n], matmul(A, x[n:])))
         dx[n:] = x[n:] * (matmul(B, x[:n]) - dot(x[n:], matmul(B, x[:n])))
-        return dx
+
+        if numpy_output:
+            return dx.numpy()
+        else:
+            return dx
     
     def adaptive_tensor(self,x_raw,t=None):
+        '''
+        The right hand side of two-population adaptive reinforcement learning equation, as defined in [1]_.
+
+        Parameters
+        ----------
+        x_raw : Tensor
+            Choice distribution vector.
+        t : float, optional
+            Time variable for running numerical simulation.
+
+        Return
+        ------
+        ndarray if `numpy_output=True`, otherwise Tensor
+
+        See Also
+        --------
+        twoD_replicator.replicator : two-population replicator equation for ndarray.
+        twoD_replicator.adaptive : two-population adaptive reinforcement learning equation for ndarray.
+        twoD_replicator.replicator_tensor : two-population replicator equation for tensors.
+
+        References
+        ----------
+        .. [1] Y. Sato, E. Akiyama, and J. P Crutchfield, Stability and diversity in collective adaptation, Physica. D 210 (2005),
+no. 1, 21–57.  
+        '''
         n = self.shape[0]
         m = self.shape[1]
         A = tensor(self.payoff1).double()
@@ -79,8 +254,6 @@ class twoD_replicator:
         dx[:n] = x[:n] * (matmul(A, x[n:]) - dot(x[:n], matmul(A, x[n:])) + self.memory1 * (-log(x[:n]) + dot(x[:n], log(x[:n]))))
         dx[n:] = x[n:] * (matmul(B, x[:n]) - dot(x[n:], matmul(B, x[:n])) + self.memory2 * (-log(x[n:]) + dot(x[n:], log(x[n:]))))
         return dx
-
-    
 
 # Drawings
 
@@ -95,12 +268,12 @@ def draw_line(start, end, points=1000):
     end : list / array_like
         end point
     points : int, optional
-        number of points included in the array, including start and end points
-        
+        number of points included in the array, including start and end points.
         
     Return
     ------
-    array of point on the line, with row index being coordinate index and column index being index of points.
+    ndarray
+        array of point on the line, with row index being coordinate index and column index being index of points.
     '''
     
     # ts = 0 represents starting point, ts = 1 represents end point.
@@ -112,18 +285,69 @@ def draw_line(start, end, points=1000):
     return start_reshaped + ((end_reshaped - start_reshaped) @ ts)
 
 def proj_3D_simplex(array_to_be_transformed):
+    '''
+    Project points on a 3D simplex onto a 2D triangle by using method in [1]_.
+    
+    Parameters
+    ----------
+    array_to_be_transformed : ndarray
+        array of point on the line, with row index being coordinate index and column index being index of points.
+        
+    Return
+    ------
+    ndarray 
+        array of point on the line, with row index being coordinate index and column index being index of points.
+
+    References
+    ----------
+    .. [1] Official dynamics of games notes by Prof. Sebestian van-Strien. Available at https://www.ma.imperial.ac.uk/~svanstri/teaching.php.
+    '''
     proj_mat = np.array(
     [[-1 * np.cos(30. / 360. * 2. * np.pi),np.cos(30. / 360. * 2. * np.pi), 0.],
      [-1 * np.sin(30. / 360. * 2. * np.pi),-1 * np.sin(30. / 360. * 2. * np.pi), 1.]])
     return proj_mat @ array_to_be_transformed
 
 def proj_6D_2D(array_to_be_transformed):
+    '''
+    Project points on the product of two 3D simplices onto a 2D plane by using transformation [1]_ to replicate the figures in [2]_.
+    
+    Parameters
+    ----------
+    array_to_be_transformed : ndarray
+        array of point on the line, with row index being coordinate index and column index being index of points.
+        
+    Return
+    ------
+    ndarray 
+        array of point on the line, with row index being coordinate index and column index being index of points.
+
+    References
+    ----------
+    .. [1] Official dynamics of games notes by Prof. Sebestian van-Strien. Available at https://www.ma.imperial.ac.uk/~svanstri/teaching.php.
+    .. [2] Y. Sato, E. Akiyama, and J. P Crutchfield, Stability and diversity in collective adaptation, Physica. D 210 (2005),
+no. 1, 21–57
+    '''
     proj_mat = np.array(
     [[3.65, -1.35, 1.35, 5.35, 1.35, 1.45],
      [0.4, 0.4, 4.6, 1.9, -0.4, 4.4]])
     return proj_mat @ array_to_be_transformed
 
 def initial_2D_simplex_figure(vertex_label = True):
+    '''
+    To initialise a figure with a triangle.
+    
+    Parameters
+    ----------
+    vertex_label : bool, optional
+        If `True` then the vertices of the triangle are annotated.
+        
+    Return
+    ------
+    fig : matplotlib.figure 
+        Figure that the triangle is living on.
+    ax : matplotlib.axes
+        Axes that the triangle is living on. 
+    '''
     fig, ax = plt.subplots()
     ax.axis("off")
 
@@ -142,6 +366,21 @@ def initial_2D_simplex_figure(vertex_label = True):
     return fig, ax
 
 def initial_6D_2D_figure(figsize=(12,12)):
+    '''
+    To initialise the figure used in [1]_.
+    
+    Parameters
+    ----------
+    figsize : tuple, optional
+        Determine the size of figure.
+        
+    Return
+    ------
+    fig : matplotlib.figure 
+        Figure that the boundaries are living on.
+    ax : matplotlib.axes
+        Axes that the boundaries are living on. 
+    '''
     fig, ax = plt.subplots(figsize=figsize)
     ax.axis("off")
 
@@ -164,6 +403,23 @@ def initial_6D_2D_figure(figsize=(12,12)):
 # Misc
 
 def simulate_close(original, max_diff, state=None):
+    '''
+    To simulate a new point next to certain original point.
+    
+    Parameters
+    ----------
+    original : [1,...] ndarray
+        position of original point.
+    max_diff : float
+        maximum difference between the original and new point
+    state : int, optional
+        seed for random number generation
+        
+    Return
+    ------
+    [1,...] ndarray
+        position of new point.
+    '''
     # max_diff represents maximum difference to first four coordinates
     
     if state:
@@ -174,4 +430,17 @@ def simulate_close(original, max_diff, state=None):
     return original + max_diff * noise
 
 def localmax(arr):
+    '''
+    Determine the local maxima of a sequence.
+    
+    Parameters
+    ----------
+    arr : [1,...] ndarray
+        array for which the local maxima is computed.
+        
+    Return
+    ------
+    [1,...] ndarray
+        array containing the local maxima.
+    '''
     return arr[1:-1][(arr[2:] < arr[1:-1]) * (arr[1:-1] >= arr[:-2])]
