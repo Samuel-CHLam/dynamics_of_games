@@ -11,40 +11,44 @@ Most functions from the modules include a docstring. If you want to view it, sim
 
 ```
 Compute the finite time Lyapunov spectrum of dynamical system \dot{x} = f(x) by solving the first variational function.
-    Parameters
-    ----------
-    physical : PyFunctionObject
-        Function f(x) of the dynamical system for which the Lyapunov spectrum is computed.
-    initial_data : ndarray
-        Initial condition of the dynamical system
-    step : int, optional
-        Number of steps of simulation
-    interval : float, optional
-        Stepsize for each timestep.
-    physical_jacobian : PyFunctionObject, optional
-        Function of the Jacobian of f(x). If not supplied then the Jacobian is computed using `compute_Jacobian`.
-    physical_tensor_to_numpy : bool, optional
-        `True` indicates that the function supplied for `physical` is a function with tensor input.
-    initial_directions : ndarray, optional
-        Initial directions for the first variational equation, arranged as matrix with columns as directions. If not supplied then the directions are assumed to be the directions of standard basis vectors.
-    show_x : bool, optional
-        If `True` then the trajectory of the first variational function is computed and returned.
-    return_end : bool, optional
-        If `True`, only the final values of Lyapunov spectrum is returned, otherwise the Lyapunov spectra at different timestep are returned as a matrix.
-    Return
-    ------
-    lambda : ndarray
-        If `return_end=True`, only the final values of Lyapunov spectrum is returned, otherwise the Lyapunov spectra at different timestep are returned as a matrix.
-    x_arr : ndarray or None
-        Return the trajectory of the first variational function is computed and returned when `show_x=True`.
-    Notes
-    -----
-    After solving the first variational equation for a small time step, the directions are orthogonalised to ensure numerical stability.
-    References
-    ----------
-    .. [1] J. C. Vallejo, Predictability of chaotic dynamics a finite-time lyapunov exponents approach, 2nd ed. 2019., Springer
+
+Parameters
+----------
+physical : PyFunctionObject
+    Function f(x) of the dynamical system for which the Lyapunov spectrum is computed.
+initial_data : ndarray
+    Initial condition of the dynamical system
+step : int, optional
+    Number of steps of simulation
+interval : float, optional
+    Stepsize for each timestep.
+physical_jacobian : PyFunctionObject, optional
+    Function of the Jacobian of f(x). If not supplied then the Jacobian is computed using `compute_Jacobian`.
+physical_tensor_to_numpy : bool, optional
+    `True` indicates that the function supplied for `physical` is a function with tensor input.
+initial_directions : ndarray, optional
+    Initial directions for the first variational equation, arranged as matrix with columns as directions. If not supplied then the directions are assumed to be the directions of standard basis vectors.
+show_x : bool, optional
+    If `True` then the trajectory of the first variational function is computed and returned.
+return_end : bool, optional
+    If `True`, only the final values of Lyapunov spectrum is returned, otherwise the Lyapunov spectra at different timestep are returned as a matrix.
+
+Return
+------
+lambda : ndarray
+    If `return_end=True`, only the final values of Lyapunov spectrum is returned, otherwise the Lyapunov spectra at different timestep are returned as a matrix.
+x_arr : ndarray or None
+    Return the trajectory of the first variational function is computed and returned when `show_x=True`.
+
+Notes
+-----
+After solving the first variational equation for a small time step, the directions are orthogonalised to ensure numerical stability.
+
+References
+----------
+.. [1] J. C. Vallejo, Predictability of chaotic dynamics a finite-time lyapunov exponents approach, 2nd ed. 2019., Springer
 Series in Synergetics, Springer International Publishing, Cham, 2019.
-    .. [2] K Ramasubramanian and M. S Sriram, A comparative study of computation of lyapunov spectra with different
+.. [2] K Ramasubramanian and M. S Sriram, A comparative study of computation of lyapunov spectra with different
 algorithms, Physica. D 139 (2000), no. 1, 72–86.
 ```
 
